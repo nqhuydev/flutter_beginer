@@ -3,32 +3,22 @@ import 'package:flutter/material.dart';
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: new HomePage(),
+    home: helloRectangle(),
     title: 'Hello Rectangle',
     theme: ThemeData.light(),
   ));
 }
 
-class HomePage extends StatefulWidget {
-  @override
-  _HomePageState createState() => _HomePageState();
+Widget helloRectangle(){
+  return Container(
+    color: Colors.green,
+    child: Center(
+        child: Text('Nguyen Huy', style: TextStyle(color: Colors.white, fontSize: 10)),
+    ),
+  );
 }
 
-class _HomePageState extends State<HomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.greenAccent,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Huy', style: TextStyle(color: Colors.amber, fontSize: 18)),
-          Text('Huy', style: TextStyle(color: Colors.amber, fontSize: 18)),
-          Text('Huy', style: TextStyle(color: Colors.amber, fontSize: 18)),
-          Text('Huy', style: TextStyle(color: Colors.amber, fontSize: 18)),
-          Text('Huy', style: TextStyle(color: Colors.amber, fontSize: 18))
-        ],
-      ),
-    );
-  }
-}
+
+
+
+
