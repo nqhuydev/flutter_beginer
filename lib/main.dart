@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:hello_rectangle/category.dart';
 
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: helloRectangle(),
-    title: 'Hello Rectangle',
-    theme: ThemeData.light(),
+    home: Scaffold(
+      appBar: AppBar(
+        title: Text('Hello Rectangle'),
+      ),
+      body: HelloRectangle(),
+    ),
   ));
 }
 
-Widget helloRectangle(){
-  return Container(
-    color: Colors.green,
-    child: Center(
-        child: Text('Nguyen Huy', style: TextStyle(color: Colors.white, fontSize: 10)),
-    ),
-  );
+class HelloRectangle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.transparent,
+      child: Center(
+        child: Category(),
+      ),
+    );
+  }
 }
-
-
-
-
-
