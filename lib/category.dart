@@ -1,52 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:hello_rectangle/converter_router.dart';
+import 'package:hello_rectangle/unit.dart';
 
-class Category extends StatefulWidget {
-  @override
-  _CategoryState createState() => _CategoryState();
-}
+final _rowHeight = 100.0;
+final _borderRadius = BorderRadius.circular(_rowHeight / 2);
 
-class _CategoryState extends State<Category> {
-  double _rowHeight = 50;
-  BorderRadius _borderRadius = BorderRadius.all(Radius.circular(30));
-  String _name = 'Cake';
+class Category extends StatelessWidget {
+  final String name;
+  final ColorSwatch color;
+  final IconData iconLocation;
+  final List<Unit> units;
+
+  const Category(
+      {Key key, this.name, this.color, this.iconLocation, this.units})
+      : assert(iconLocation != null),
+        assert(name != null),
+        assert(color != null),
+        assert(units != null),
+        super(key: key);
+
+  ///Navigation to the [ConverterRouter].
+  void _navigateToConverter(BuildContext context) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+    Navigator.of(context).push(MaterialPageRoute<Null>(
+      builder: (BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(
+            elevation: 1.0,
+            title: Text(
+              name,
+              style: Theme.of(context).textTheme.display1,
+            ),
+            centerTitle: true,
+            backgroundColor: color,
+          ),
+          body: ConverterRouter(units: units, name: name, color: color),
+        );
+      },
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.blueAccent,
+      color: Colors.transparent,
       borderRadius: _borderRadius,
       child: Container(
         height: _rowHeight,
         child: InkWell(
           borderRadius: _borderRadius,
-          highlightColor: Colors.amber,
-          splashColor: Colors.amberAccent,
-          onTap: () => print('I was tapped!'),
-          onLongPress: () {
-            print('I was long taps');
-          },
+          highlightColor: color,
+          splashColor: color,
+          onTap: () => _navigateToConverter(context),
           child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(right: 16),
-                    child: Icon(Icons.cake, color: Colors.white,),
+            padding: EdgeInsets.all(8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: Icon(
+                    iconLocation,
+                    size: 60,
                   ),
-                  Center(
-                    child: Text(
-                      _name,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.display1.copyWith(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700),
-                    ),
+                ),
+                Center(
+                  child: Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headline,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

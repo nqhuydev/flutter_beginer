@@ -1,26 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:hello_rectangle/category.dart';
+import 'package:hello_rectangle/category_router.dart';
 
 void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: Scaffold(
-      appBar: AppBar(
-        title: Text('Hello Rectangle'),
-      ),
-      body: HelloRectangle(),
-    ),
-  ));
+  runApp(UnitConverterApp());
 }
 
-class HelloRectangle extends StatelessWidget {
+class UnitConverterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.transparent,
-      child: Center(
-        child: Category(),
-      ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Unit Converter',
+      home: CategoryRouter(),
     );
   }
 }
+
