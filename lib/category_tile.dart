@@ -9,9 +9,8 @@ class CategoryTile extends StatelessWidget {
   final ValueChanged<Category> onTap;
 
   const CategoryTile(
-      {Key key, @required this.category, @required this.onTap})
+      {Key key, @required this.category, this.onTap})
       : assert(category != null),
-        assert(onTap != null),
         super(key: key);
 
   ///Navigation to the [ConverterRouter].
@@ -42,7 +41,7 @@ class CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: onTap == null ? Color.fromRGBO(50, 50, 50, 0.2) : Colors.transparent,
       borderRadius: _borderRadius,
       child: Container(
         height: _rowHeight,
@@ -50,7 +49,7 @@ class CategoryTile extends StatelessWidget {
           borderRadius: _borderRadius,
           highlightColor: category.color['highlight'],
           splashColor: category.color['splash'],
-          onTap: () => onTap(category),
+          onTap: onTap == null ? null : () => onTap(category),
           child: Padding(
             padding: EdgeInsets.all(8),
             child: Row(

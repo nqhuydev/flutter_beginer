@@ -70,6 +70,7 @@ class _CategoryRouterState extends State<CategoryRouter> {
     'assets/icons/power.png',
     'assets/icons/currency.png',
   ];
+
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
@@ -81,11 +82,11 @@ class _CategoryRouterState extends State<CategoryRouter> {
 
   Future<void> _retrieveLocalCategories() async {
     // Lấy file từ thư mục assets
-    final json = DefaultAssetBundle
-        .of(context)
+    final json = DefaultAssetBundle.of(context)
         .loadString('assets/data/regular_units.json');
-    Map data = JsonDecoder().convert(await json);
+    final data = JsonDecoder().convert(await json);
     if (data is! Map) {
+      // Kiểm tra xem dữ liệu lấy ra có phải kiểu Map không
       throw ('Data retrie from API is not a Map');
     }
     var categoryIndex = 0;
@@ -140,7 +141,6 @@ class _CategoryRouterState extends State<CategoryRouter> {
     }
   }
 
-
   void _onCategoryTap(Category category) {
     setState(() {
       _currentCategory = category;
@@ -151,9 +151,13 @@ class _CategoryRouterState extends State<CategoryRouter> {
     if (deviceOrientation == Orientation.portrait) {
       return ListView.builder(
         itemBuilder: (BuildContext context, int index) {
+          var _category = _categories[index];
           return CategoryTile(
-            category: _categories[index],
-            onTap: _onCategoryTap,
+            category: _category,
+            onTap:
+                _category.name == apiCategory['name'] && _category.units.isEmpty
+                    ? null
+                    : _onCategoryTap,
           );
         },
         itemCount: _categories.length,
@@ -175,7 +179,7 @@ class _CategoryRouterState extends State<CategoryRouter> {
   @override
   Widget build(BuildContext context) {
     /*Khởi tạo list Category*/
-    if(_categories.isEmpty){
+    if (_categories.isEmpty) {
       return Center(
         child: Container(
           height: 90.0,

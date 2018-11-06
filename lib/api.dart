@@ -52,7 +52,7 @@ class Api {
 
       return json.decode(responseBody);
     } on Exception catch(e){
-      print('$e');
+      print('Error: $e');
       return null;
     }
   }
