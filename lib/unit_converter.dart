@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hello_rectangle/api.dart';
 import 'package:hello_rectangle/category.dart';
 import 'package:hello_rectangle/unit.dart';
 import 'package:meta/meta.dart';
@@ -21,12 +22,23 @@ class _UnitConverter extends State<UnitConverter> {
   String _convertedValue = '';
   List<DropdownMenuItem> _unitMenuItems;
   bool _showValidationError = false;
+  final _inputKey = GlobalKey(debugLabel: 'inputText');
 
   @override
   void initState() {
     super.initState();
     _createDropMenuItems();
     _setDefaults();
+  }
+
+  //Cập nhật lại Drop menu khi chuyển đơn vị chuyển đổi
+  @override
+  void didUpdateWidget(UnitConverter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.category != widget.category) {
+      _createDropMenuItems();
+      _setDefaults();
+    }
   }
 
   void _createDropMenuItems() {
@@ -51,19 +63,22 @@ class _UnitConverter extends State<UnitConverter> {
       _fromValue = widget.category.units[0];
       _toValue = widget.category.units[1];
     });
+    if (_inputValue != null) {
+      _updateConversion();
+    }
   }
 
   void _updateInputValue(String input) {
     setState(() {
-      if(input == null || input.isEmpty){
+      if (input == null || input.isEmpty) {
         _convertedValue = '';
-      }else{
-        try{
+      } else {
+        try {
           final inputDouble = double.parse(input);
           _showValidationError = false;
           _inputValue = inputDouble;
           _updateConversion();
-        } on Exception catch (e){
+        } on Exception catch (e) {
           print('Error: $e');
           _showValidationError = true;
         }
@@ -89,11 +104,20 @@ class _UnitConverter extends State<UnitConverter> {
     }
   }
 
-  void _updateConversion() {
-    setState(() {
-      _convertedValue =
-          _format(_inputValue * (_toValue.conversion / _fromValue.conversion));
-    });
+  Future<void> _updateConversion() async {
+    if (widget.category.name == apiCategory['name']) {
+      final api = Api();
+      final conversion = await api.convert(apiCategory['route'],
+          _inputValue.toString(), _fromValue.name, _toValue.name);
+      setState(() {
+        _convertedValue = _format(conversion);
+      });
+    } else {
+      setState(() {
+        _convertedValue = _format(
+            _inputValue * (_toValue.conversion / _fromValue.conversion));
+      });
+    }
   }
 
   Unit _getUnit(String unitName) {
@@ -121,8 +145,7 @@ class _UnitConverter extends State<UnitConverter> {
     return outputNum;
   }
 
-
-  Widget _createDropMenu(String currentValue, ValueChanged<dynamic> onChanged){
+  Widget _createDropMenu(String currentValue, ValueChanged<dynamic> onChanged) {
     return Container(
       margin: EdgeInsets.only(top: 16.0),
       decoration: BoxDecoration(
@@ -159,6 +182,7 @@ class _UnitConverter extends State<UnitConverter> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
+            key: _inputKey,
             style: Theme.of(context).textTheme.display1,
             decoration: InputDecoration(
               labelStyle: Theme.of(context).textTheme.display1,
@@ -197,7 +221,7 @@ class _UnitConverter extends State<UnitConverter> {
               labelStyle: Theme.of(context).textTheme.display1,
               labelText: 'Output',
               border:
-              OutlineInputBorder(borderRadius: BorderRadius.circular(0.0)),
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(0.0)),
             ),
           ),
           _createDropMenu(_toValue.name, _updateToConversion),
@@ -216,7 +240,24 @@ class _UnitConverter extends State<UnitConverter> {
 
     return Padding(
       padding: _padding,
-      child: converter,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          if (constraints.maxHeight > constraints.maxWidth) {
+            return SingleChildScrollView(
+              child: converter,
+            );
+          } else {
+            return SingleChildScrollView(
+              child: Center(
+                child: Container(
+                  width: 450,
+                  child: converter,
+                ),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }

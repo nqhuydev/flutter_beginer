@@ -1,7 +1,13 @@
+import 'dart:convert';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:hello_rectangle/api.dart';
+import 'package:hello_rectangle/backdrop.dart';
 import 'package:hello_rectangle/category.dart';
+import 'package:hello_rectangle/category_tile.dart';
 import 'package:hello_rectangle/unit.dart';
-import 'category_tile.dart';
+import 'package:hello_rectangle/unit_converter.dart';
 
 final _backgroundColor = Colors.green[100];
 
@@ -13,17 +19,10 @@ class CategoryRouter extends StatefulWidget {
 }
 
 class _CategoryRouterState extends State<CategoryRouter> {
+  Category _defaultCategory;
+  Category _currentCategory;
+
   final _categories = <Category>[];
-  static const _categoryName = <String>[
-    'Length',
-    'Area',
-    'Volume',
-    'Mass',
-    'Time',
-    'Digital Storage',
-    'Energy',
-    'Currency',
-  ];
 
   static const _baseColors = <ColorSwatch>[
     ColorSwatch(0xFF6AB7A8, {
@@ -61,60 +60,150 @@ class _CategoryRouterState extends State<CategoryRouter> {
     }),
   ];
 
+  static const _icons = <String>[
+    'assets/icons/length.png',
+    'assets/icons/area.png',
+    'assets/icons/volume.png',
+    'assets/icons/mass.png',
+    'assets/icons/time.png',
+    'assets/icons/digital_storage.png',
+    'assets/icons/power.png',
+    'assets/icons/currency.png',
+  ];
   @override
-  void initState() {
-    super.initState();
-    for (var i = 0; i < _categoryName.length; i++) {
-      _categories.add(Category(
-        name: _categoryName[i],
-        color: _baseColors[i],
-        iconLocation: Icons.cake,
-        units: _retrieveUnitList(_categoryName[i]),
-      ));
+  Future<void> didChangeDependencies() async {
+    super.didChangeDependencies();
+    if (_categories.isEmpty) {
+      await _retrieveLocalCategories();
+      await _retrieveApiCategory();
     }
   }
 
-  void _onCategoryTap(Category category) {}
-
-  Widget _buildCategoryWidget() {
-    return ListView.builder(
-      itemBuilder: (BuildContext context, int index) {
-        return CategoryTile(
-            key: null, category: _categories[index], onTap: _onCategoryTap);
-      },
-      itemCount: _categories.length,
-    );
+  Future<void> _retrieveLocalCategories() async {
+    // Lấy file từ thư mục assets
+    final json = DefaultAssetBundle
+        .of(context)
+        .loadString('assets/data/regular_units.json');
+    Map data = JsonDecoder().convert(await json);
+    if (data is! Map) {
+      throw ('Data retrie from API is not a Map');
+    }
+    var categoryIndex = 0;
+    data.keys.forEach((key) {
+      final List<Unit> units =
+          data[key].map<Unit>((dynamic data) => Unit.fromJson(data)).toList();
+      var category = Category(
+        name: key,
+        color: _baseColors[categoryIndex],
+        iconLocation: _icons[categoryIndex],
+        units: units,
+      );
+      setState(() {
+        if (categoryIndex == 0) {
+          _defaultCategory = category;
+        }
+        _categories.add(category);
+      });
+      categoryIndex += 1;
+    });
   }
 
-  List<Unit> _retrieveUnitList(String categoryName) {
-    return List.generate(10, (int i) {
-      i += 1;
-      return Unit(name: '$categoryName Unit $i', conversion: i.toDouble());
+  /// Retrieves a [Category] and its [Unit]s from an API on the web
+  Future<void> _retrieveApiCategory() async {
+    // Add a placeholder while we fetch the Currency category using the API
+    setState(() {
+      _categories.add(Category(
+        name: apiCategory['name'],
+        units: [],
+        color: _baseColors.last,
+        iconLocation: _icons.last,
+      ));
     });
+    final api = Api();
+    final jsonUnits = await api.getUnits(apiCategory['route']);
+    // If the API errors out or we have no internet connection, this category
+    // remains in placeholder mode (disabled)
+    if (jsonUnits != null) {
+      final units = <Unit>[];
+      for (var unit in jsonUnits) {
+        units.add(Unit.fromJson(unit));
+      }
+      setState(() {
+        _categories.removeLast();
+        _categories.add(Category(
+          name: apiCategory['name'],
+          units: units,
+          color: _baseColors.last,
+          iconLocation: _icons.last,
+        ));
+      });
+    }
+  }
+
+
+  void _onCategoryTap(Category category) {
+    setState(() {
+      _currentCategory = category;
+    });
+  }
+
+  Widget _buildCategoryWidget(Orientation deviceOrientation) {
+    if (deviceOrientation == Orientation.portrait) {
+      return ListView.builder(
+        itemBuilder: (BuildContext context, int index) {
+          return CategoryTile(
+            category: _categories[index],
+            onTap: _onCategoryTap,
+          );
+        },
+        itemCount: _categories.length,
+      );
+    } else {
+      return GridView.count(
+        crossAxisCount: 2,
+        childAspectRatio: 3.0,
+        children: _categories.map((Category c) {
+          return CategoryTile(
+            category: c,
+            onTap: _onCategoryTap,
+          );
+        }).toList(),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     /*Khởi tạo list Category*/
+    if(_categories.isEmpty){
+      return Center(
+        child: Container(
+          height: 90.0,
+          width: 90.0,
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
-    final appBar = AppBar(
-      elevation: 0.0,
-      title: Text(
-        'Unit Converter',
-      ),
-      centerTitle: Theme.of(context).platform == TargetPlatform.iOS,
-      backgroundColor: _backgroundColor,
-    );
-
+    assert(debugCheckHasMediaQuery(context));
     final listView = Container(
       color: _backgroundColor,
-      padding: EdgeInsets.symmetric(horizontal: 8.0),
-      child: _buildCategoryWidget(),
+      padding: EdgeInsets.only(
+        left: 8.0,
+        right: 8.0,
+        bottom: 48.0,
+      ),
+      child: _buildCategoryWidget(MediaQuery.of(context).orientation),
     );
 
-    return Scaffold(
-      appBar: appBar,
-      body: listView,
-    );
+    return Backdrop(
+        currentCategory:
+            _currentCategory == null ? _defaultCategory : _currentCategory,
+        frontPanel: _currentCategory == null
+            ? UnitConverter(category: _defaultCategory)
+            : UnitConverter(category: _currentCategory),
+        backPanel: listView,
+        frontTitle: Text('Unit Converter'),
+        backTitle: Text('Select a Category'));
   }
 }
